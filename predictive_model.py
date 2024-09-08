@@ -15,9 +15,7 @@ from advanced_ml_models import train_advanced_models, predict_fortress_balance_s
 from data_preprocessor import preprocess_data, engineer_features
 
 def engineer_features(data):
-    """
-    Create new features from existing ones, handling missing columns.
-    """
+
     engineered_data = data.copy()
     
     if 'Total Debt' in data.columns and 'Total Equity' in data.columns:
