@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 
-def create_visualizations(ticker, ratios, valuation_metrics, prediction, historical_ratios, comparison, risk_metrics):
+def create_visualizations(ticker, ratios, valuation_metrics, avg_prediction, historical_ratios, comparison, risk_metrics):
     # Set up the plot style
     sns.set(style="whitegrid")
 
@@ -40,7 +40,7 @@ def create_visualizations(ticker, ratios, valuation_metrics, prediction, histori
     ax5.tick_params(axis='x', rotation=45)
 
     # Plot prediction likelihood
-    ax6.pie([prediction, 1-prediction], labels=['Fortress', 'Non-Fortress'], autopct='%1.1f%%')
+    ax6.pie([avg_prediction, 1-avg_prediction], labels=['Fortress', 'Non-Fortress'], autopct='%1.1f%%')
     ax6.set_title(f"Predicted Likelihood of Fortress Balance Sheet for {ticker}")
 
     plt.tight_layout()

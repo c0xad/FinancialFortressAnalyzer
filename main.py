@@ -1,13 +1,13 @@
-from advanced_analysis import calculate_historical_ratios, perform_comparative_analysis, calculate_risk_metrics
+from advanced_analysis import calculate_historical_ratios, perform_comparative_analysis, calculate_risk_metrics, generate_advanced_report
 from data_fetcher import get_financial_data, get_stock_data
 from ratio_calculator import calculate_ratios
 from balance_sheet_analyzer import is_fortress_balance_sheet
 from valuation_metrics import calculate_valuation_metrics
-from predictive_model import predict_fortress_balance_sheet
+from predictive_model import train_model, predict_fortress_balance_sheet, load_historical_data
 from visualizer import create_visualizations
-from advanced_analysis import generate_advanced_report, calculate_historical_ratios, perform_comparative_analysis, calculate_risk_metrics
+from sentiment_analyzer import get_company_sentiment, interpret_sentiment
 
-def analyze_company(ticker, peer_tickers):
+def analyze_company(ticker, peer_tickers, news_api_key):
     # Fetch financial data
     balance_sheet, income_statement, cash_flow = get_financial_data(ticker)
     stock_data = get_stock_data(ticker)
@@ -23,26 +23,19 @@ def analyze_company(ticker, peer_tickers):
     # Calculate valuation metrics
     valuation_metrics = calculate_valuation_metrics(stock_data, income_statement, balance_sheet)
 
-    # Predict future fortress balance sheet likelihood
-    prediction = predict_fortress_balance_sheet(ratios, valuation_metrics)
+    # Predict using advanced models
+    historical_data = load_historical_data()  # You need to implement this function to load historical data
+    models, scaler = train_model(historical_data)
+    predictions = predict_fortress_balance_sheet(ratios, valuation_metrics, models, scaler)
 
-    # Print results
-    print(f"\nAnalysis for {ticker}:")
-    print("Financial Ratios:")
-    for ratio, value in ratios.items():
-        print(f"{ratio}: {value:.2f}")
-    
-    print("\nFortress Balance Sheet Criteria:")
-    for criterion, met in criteria.items():
-        print(f"{criterion}: {'Met' if met else 'Not Met'}")
-    
-    print(f"\nConclusion: This {'is' if is_fortress else 'is not'} a fortress balance sheet.")
+    print("\nAdvanced Model Predictions:")
+    for model_name, prediction in predictions.items():
+        print(f"{model_name}: {prediction:.4f}")
 
-    print("\nValuation Metrics:")
-    for metric, value in valuation_metrics.items():
-        print(f"{metric}: {value:.2f}")
-
-    print(f"\nPredicted likelihood of maintaining a fortress balance sheet: {prediction:.2f}")
+    # Perform sentiment analysis
+    sentiment_score = get_company_sentiment(ticker, news_api_key)
+    sentiment = interpret_sentiment(sentiment_score)
+    print(f"\nCurrent Sentiment: {sentiment} (Score: {sentiment_score:.2f})")
 
     # Add advanced analysis
     historical_ratios = calculate_historical_ratios(ticker)
@@ -52,11 +45,13 @@ def analyze_company(ticker, peer_tickers):
 
     # Create visualizations only if we have data
     if ratios and valuation_metrics:
-        create_visualizations(ticker, ratios, valuation_metrics, prediction, historical_ratios, comparison, risk_metrics)
+        avg_prediction = sum(predictions.values()) / len(predictions)
+        create_visualizations(ticker, ratios, valuation_metrics, avg_prediction, historical_ratios, comparison, risk_metrics)
     else:
         print("Unable to create visualizations due to missing data.")
 
 # Example usage
 main_ticker = "AAPL"  # Apple Inc.
 peer_tickers = ["MSFT", "GOOGL", "AMZN"]  # Microsoft, Alphabet, Amazon
-analyze_company(main_ticker, peer_tickers)
+news_api_key = "54303364278e474fb5dd36ec81eb692454303364278e474fb5dd36ec81eb6924"  # Replace with your actual News API key
+analyze_company(main_ticker, peer_tickers, news_api_key)
