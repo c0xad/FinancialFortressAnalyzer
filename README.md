@@ -12,7 +12,10 @@ Features:
 
 How to Use
 Install the required dependencies:
+"   pip install yfinance pandas numpy scipy matplotlib seaborn scikit-learn "
 Run the main script:
+"python main.py"
+
 The script will analyze Apple Inc. (AAPL) and compare it with Microsoft (MSFT), Alphabet (GOOGL), and Amazon (AMZN) by default. You can modify the main_ticker and peer_tickers variables in main.py to analyze different companies.
 
 Functions
