@@ -21,16 +21,27 @@ The script will analyze Apple Inc. (AAPL) and compare it with Microsoft (MSFT), 
 
 Key Functions
 analyze_company(ticker, peer_tickers, news_api_key): Main function to perform comprehensive analysis on a company.
+
 calculate_ratios(balance_sheet, income_statement, cash_flow): Calculates financial ratios from financial statements.
+
 is_fortress_balance_sheet(ratios): Determines if a company has a fortress balance sheet based on predefined criteria.
+
 train_model(historical_data): Trains machine learning models on historical financial data.
+
 predict_fortress_balance_sheet(ratios, valuation_metrics, models, scaler): Predicts the likelihood of a fortress balance sheet using trained models.
+
 create_visualizations(ticker, ratios, valuation_metrics, avg_prediction, historical_ratios, comparison, risk_metrics): Generates comprehensive visualizations of the analysis.Key Functions
+
 analyze_company(ticker, peer_tickers, news_api_key): Main function to perform comprehensive analysis on a company.
+
 calculate_ratios(balance_sheet, income_statement, cash_flow): Calculates financial ratios from financial statements.
+
 is_fortress_balance_sheet(ratios): Determines if a company has a fortress balance sheet based on predefined criteria.
+
 train_model(historical_data): Trains machine learning models on historical financial data.
+
 predict_fortress_balance_sheet(ratios, valuation_metrics, models, scaler): Predicts the likelihood of a fortress balance sheet using trained models.
+
 create_visualizations(ticker, ratios, valuation_metrics, avg_prediction, historical_ratios, comparison, risk_metrics): Generates comprehensive visualizations of the analysis.
 
 
