@@ -20,9 +20,7 @@ from data_preprocessor import preprocess_data, engineer_features
 from datetime import datetime
 
 def engineer_features(data):
-    """
-    Create new features from existing ones, handling missing columns.
-    """
+    
     engineered_data = data.copy()
     
     # Existing features
