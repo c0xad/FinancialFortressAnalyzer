@@ -2,6 +2,10 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from scipy.stats import percentileofscore
+from sklearn.ensemble import IsolationForest
+from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+
 
 def get_historical_data(ticker, period='5y'):
     stock = yf.Ticker(ticker)
@@ -90,6 +94,14 @@ def generate_advanced_report(ticker, peer_tickers):
     print("\nHistorical Financial Ratios:")
     print(historical_ratios)
 
+    # Anomaly Detection
+    if not historical_ratios.empty:
+        anomalies = detect_anomalies(historical_ratios)
+        print("\nAnomalies Detected:")
+        print(historical_ratios[anomalies])
+    else:
+        print("\nUnable to perform anomaly detection due to insufficient data.")
+
     # Comparative Analysis
     comparison = perform_comparative_analysis(ticker, peer_tickers)
     print("\nComparative Analysis:")
@@ -109,3 +121,16 @@ def generate_advanced_report(ticker, peer_tickers):
             print(f"{ticker} is in the {percentile:.2f}th percentile for {column}")
         else:
             print(f"Unable to calculate percentile for {column}")
+
+def detect_anomalies(data, contamination=0.1):
+    # Handle missing values
+    imputer = SimpleImputer(strategy='mean')
+    data_imputed = imputer.fit_transform(data)
+
+    # Normalize the data
+    scaler = StandardScaler()
+    data_scaled = scaler.fit_transform(data_imputed)
+
+    clf = IsolationForest(contamination=contamination, random_state=42)
+    anomalies = clf.fit_predict(data_scaled)
+    return anomalies == -1  # True for anomalies, False for normal data

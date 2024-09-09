@@ -1,6 +1,10 @@
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import train_test_split, GridSearchCV
+import joblib
+import json
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+from sklearn.model_selection import train_test_split, GridSearchCV, RandomizedSearchCV
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
@@ -13,11 +17,15 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from xgboost import XGBClassifier
 from advanced_ml_models import train_advanced_models, predict_fortress_balance_sheet_advanced
 from data_preprocessor import preprocess_data, engineer_features
+from datetime import datetime
 
 def engineer_features(data):
-
+    """
+    Create new features from existing ones, handling missing columns.
+    """
     engineered_data = data.copy()
     
+    # Existing features
     if 'Total Debt' in data.columns and 'Total Equity' in data.columns:
         engineered_data['Debt_to_Equity'] = data['Total Debt'] / data['Total Equity']
     
@@ -29,6 +37,19 @@ def engineer_features(data):
     
     if 'Net Income' in data.columns and 'Revenue' in data.columns:
         engineered_data['Profit_Margin'] = data['Net Income'] / data['Revenue']
+    
+    # New features
+    if 'Total Assets' in data.columns and 'Total Liabilities' in data.columns:
+        engineered_data['Equity_Multiplier'] = data['Total Assets'] / (data['Total Assets'] - data['Total Liabilities'])
+    
+    if 'Net Income' in data.columns and 'Total Assets' in data.columns:
+        engineered_data['Return_on_Assets'] = data['Net Income'] / data['Total Assets']
+    
+    if 'Operating Income' in data.columns and 'Revenue' in data.columns:
+        engineered_data['Operating_Margin'] = data['Operating Income'] / data['Revenue']
+    
+    if 'Current Assets' in data.columns and 'Current Liabilities' in data.columns:
+        engineered_data['Working_Capital'] = data['Current Assets'] - data['Current Liabilities']
     
     return engineered_data
 
@@ -70,25 +91,70 @@ def load_historical_data():
     
     return data
 
+def save_model_version(model, scaler, performance_metrics):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    model_filename = f"model_version_{timestamp}.joblib"
+    scaler_filename = f"scaler_version_{timestamp}.joblib"
+    metrics_filename = f"metrics_version_{timestamp}.json"
+    
+    joblib.dump(model, model_filename)
+    joblib.dump(scaler, scaler_filename)
+    
+    with open(metrics_filename, 'w') as f:
+        json.dump(performance_metrics, f)
+    
+    print(f"Model version saved: {model_filename}")
+
+def get_feature_importance(model, feature_names):
+    if hasattr(model, 'feature_importances_'):
+        return model.feature_importances_
+    elif hasattr(model, 'coef_'):
+        return np.abs(model.coef_[0])
+    else:
+        raise ValueError("Model does not have feature importance attributes")
+
 def train_model(historical_data):
-    # Ensure there's a 'target' column
     if 'target' not in historical_data.columns:
-        # You'll need to define how to create the target variable
-        # This is just an example; adjust according to your needs
         historical_data['target'] = (historical_data['Return on Assets (ROA)'] > historical_data['Return on Assets (ROA)'].mean()).astype(int)
 
     X = historical_data.drop('target', axis=1)
     y = historical_data['target']
 
     X_engineered = engineer_features(X)
-    X_preprocessed, _ = preprocess_data(X_engineered)  # Unpack the tuple
+    X_preprocessed, scaler = preprocess_data(X_engineered)
 
-    # Ensure X and y have the same number of samples
-    X_preprocessed = X_preprocessed[:len(y)]
-    y = y[:len(X_preprocessed)]
+    X_train, X_test, y_train, y_test = train_test_split(X_preprocessed, y, test_size=0.2, random_state=42)
 
-    models, scaler = train_advanced_models(X_preprocessed, y)
-    return models, scaler
+    param_grid = {
+        'n_estimators': [100, 200, 300],
+        'max_depth': [5, 10, None],
+        'min_samples_split': [2, 5, 10],
+        'min_samples_leaf': [1, 2, 4]
+    }
+
+    rf = RandomForestClassifier(random_state=42)
+    random_search = RandomizedSearchCV(rf, param_distributions=param_grid, n_iter=10, cv=5, random_state=42)
+    random_search.fit(X_train, y_train)
+
+    best_rf = random_search.best_estimator_
+
+    # Evaluate model performance
+    y_pred = best_rf.predict(X_test)
+    performance_metrics = {
+        'accuracy': accuracy_score(y_test, y_pred),
+        'precision': precision_score(y_test, y_pred),
+        'recall': recall_score(y_test, y_pred),
+        'f1': f1_score(y_test, y_pred)
+    }
+
+    # Save model version
+    save_model_version(best_rf, scaler, performance_metrics)
+
+    # Get feature importance
+    feature_importance = get_feature_importance(best_rf, X.columns)
+
+    models = {'RandomForest': best_rf}
+    return models, scaler, feature_importance
 
 def predict_fortress_balance_sheet(ratios, valuation_metrics, models, scaler):
     features = {**ratios, **valuation_metrics}

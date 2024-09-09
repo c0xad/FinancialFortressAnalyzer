@@ -6,6 +6,8 @@ from valuation_metrics import calculate_valuation_metrics
 from predictive_model import train_model, predict_fortress_balance_sheet, load_historical_data
 from visualizer import create_visualizations
 from sentiment_analyzer import get_company_sentiment, interpret_sentiment
+from advanced_visualizations import create_interactive_visualizations, plot_feature_importance
+
 
 def analyze_company(ticker, peer_tickers, news_api_key):
     # Fetch financial data
@@ -24,8 +26,8 @@ def analyze_company(ticker, peer_tickers, news_api_key):
     valuation_metrics = calculate_valuation_metrics(stock_data, income_statement, balance_sheet)
 
     # Predict using advanced models
-    historical_data = load_historical_data()  # You need to implement this function to load historical data
-    models, scaler = train_model(historical_data)
+    historical_data = load_historical_data()
+    models, scaler, feature_importance = train_model(historical_data)
     predictions = predict_fortress_balance_sheet(ratios, valuation_metrics, models, scaler)
 
     print("\nAdvanced Model Predictions:")
@@ -43,12 +45,16 @@ def analyze_company(ticker, peer_tickers, news_api_key):
     risk_metrics = calculate_risk_metrics(ticker)
     generate_advanced_report(ticker, peer_tickers)
 
-    # Create visualizations only if we have data
+    # Create visualizations
     if ratios and valuation_metrics:
         avg_prediction = sum(predictions.values()) / len(predictions)
         create_visualizations(ticker, ratios, valuation_metrics, avg_prediction, historical_ratios, comparison, risk_metrics)
+        create_interactive_visualizations(ticker, ratios, valuation_metrics, avg_prediction, historical_ratios, comparison, risk_metrics)
     else:
         print("Unable to create visualizations due to missing data.")
+
+    # Plot feature importance
+    plot_feature_importance(feature_importance, historical_data.drop('target', axis=1).columns)
 
 # Example usage
 main_ticker = "AAPL"  # Apple Inc.
